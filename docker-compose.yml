@@ -3,8 +3,8 @@ services:
     build:
       context: .
       dockerfile: ./nodejs/Dockerfile
-    # volumes:
-    #   - ./nodejs:/usr/src/app
+    volumes:
+      - sqlite-data:./nodejs/db.db
     restart: always
     env_file:
       - .env
@@ -29,4 +29,4 @@ services:
 volumes:
   letsencrypt:
   letsencrypt-data:
-  nodejs:
+  sqlite-data:
