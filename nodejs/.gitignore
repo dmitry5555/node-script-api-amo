@@ -13,12 +13,6 @@ yarn-error.log*
 .env
 .DS_Store
 
-# Docker файлы (если нужно)
-docker-compose.override.yml
-
-# Локальные IDE файлы
-.vscode/
-.idea/
 
 # db
 db.db
