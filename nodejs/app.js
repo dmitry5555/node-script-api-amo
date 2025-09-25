@@ -9,7 +9,7 @@ const token_5y = process.env.AMO_TOKEN_5Y;
 
 const https = require('https');
 const Database = require('better-sqlite3');
-const db = new Database('db.db', { verbose: console.log });
+const db = new Database('./data/db.db', { verbose: console.log });
 
 db.exec(`
     CREATE TABLE IF NOT EXISTS orders (

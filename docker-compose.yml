@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: ./nodejs/Dockerfile
     volumes:
-      - sqlite-data:./nodejs/db.db
+      - sqlite-data:/usr/src/app/data
     restart: always
     env_file:
       - .env
