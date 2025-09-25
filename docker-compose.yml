@@ -3,8 +3,8 @@ services:
     build:
       context: .
       dockerfile: ./nodejs/Dockerfile
-    volumes:
-      - ./nodejs:/usr/src/app
+    # volumes:
+    #   - ./nodejs:/usr/src/app
     restart: always
     env_file:
       - .env
