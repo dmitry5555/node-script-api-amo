@@ -1,0 +1,24 @@
+# Node.js зависимости
+node_modules/
+nodejs/node_modules/
+nodejs/db.db
+nodejs/.env
+
+# Логи npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Директории среды
+.env
+.DS_Store
+
+# Docker файлы (если нужно)
+docker-compose.override.yml
+
+# Локальные IDE файлы
+.vscode/
+.idea/
+
+# db
+db.db

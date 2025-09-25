@@ -1,0 +1,32 @@
+services:
+  pocketbase:
+    build:
+      context: .
+      dockerfile: ./nodejs/Dockerfile
+    volumes:
+      - ./nodejs:/nodejs
+    restart: always
+    env_file:
+      - .env
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+    container_name: nginx
+    ports:
+      - 80:80
+      - 443:443
+    depends_on:
+      - pocketbase
+    restart: always
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+      - letsencrypt-data:/var/lib/letsencrypt
+    env_file:
+      - .env
+
+volumes:
+  letsencrypt:
+  letsencrypt-data:
+  pocketbase:
