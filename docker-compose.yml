@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: ./nodejs/Dockerfile
     volumes:
-      - ./nodejs:/nodejs
+      - ./nodejs:/usr/src/app
     restart: always
     env_file:
       - .env
