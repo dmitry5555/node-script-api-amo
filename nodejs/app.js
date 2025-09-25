@@ -26,7 +26,7 @@ db.exec(`
 `)
 
 const http = require('node:http')
-const hostname = 'localhost'
+const hostname = '0.0.0.0'
 const port = 3000
 
 const server = http.createServer((req, res) => {
