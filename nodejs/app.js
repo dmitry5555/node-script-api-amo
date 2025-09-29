@@ -94,9 +94,7 @@ function sendOrderToAmo(order) {
         name: order.customerName,
         custom_fields_values: [
             { field_code: "PHONE", values: [{ value: order.phone }] },
-            { field_code: "EMAIL", values: [{ value: order.email }] },
-            // уникальный идентификатор из 1с но нужно создавать поле в АМО
-            // { field_code: "EXT_CUST_ID", values: [{ value: order.customerId }] }
+            { field_code: "EMAIL", values: [{ value: order.email }] }
         ]
     }];
 
@@ -112,10 +110,24 @@ function sendOrderToAmo(order) {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
+            console.log(`[Contact API] Status: ${res.statusCode}, Response:`, data);
+            
+            // Проверяем статус ответа
+            if (res.statusCode !== 200 && res.statusCode !== 201) {
+                console.error(`[Contact API] Ошибка создания контакта для orderId=${order.orderId}:`, data);
+                return;
+            }
+
             try {
                 const json = JSON.parse(data);
                 const contactId = json._embedded?.contacts?.[0]?.id;
-                if (!contactId) return console.error('Не удалось получить contactId');
+                
+                if (!contactId) {
+                    console.error(`[Contact API] Не удалось получить contactId для orderId=${order.orderId}. Response:`, json);
+                    return;
+                }
+
+                console.log(`[Contact API] Контакт создан с ID: ${contactId} для orderId=${order.orderId}`);
 
                 // создаём сделку
                 const leadData = [{
@@ -136,17 +148,45 @@ function sendOrderToAmo(order) {
                     let leadDataResp = '';
                     resLead.on('data', chunk => leadDataResp += chunk);
                     resLead.on('end', () => {
-                        db.prepare(`UPDATE orders SET status='done' WHERE orderId=?`).run(order.orderId);
-                        console.log('Сделка создана:', leadDataResp);
+                        console.log(`[Lead API] Status: ${resLead.statusCode}, Response:`, leadDataResp);
+                        
+                        // Проверяем статус ответа
+                        if (resLead.statusCode !== 200 && resLead.statusCode !== 201) {
+                            console.error(`[Lead API] Ошибка создания сделки для orderId=${order.orderId}:`, leadDataResp);
+                            return;
+                        }
+
+                        try {
+                            const leadJson = JSON.parse(leadDataResp);
+                            const leadId = leadJson._embedded?.leads?.[0]?.id;
+                            
+                            if (leadId) {
+                                db.prepare(`UPDATE orders SET status='done' WHERE orderId=?`).run(order.orderId);
+                                console.log(`[Lead API] Сделка создана с ID: ${leadId} для orderId=${order.orderId}. Статус обновлен на 'done'.`);
+                            } else {
+                                console.error(`[Lead API] Не удалось получить leadId для orderId=${order.orderId}. Response:`, leadJson);
+                            }
+                        } catch (err) {
+                            console.error(`[Lead API] Ошибка парсинга ответа для orderId=${order.orderId}:`, err);
+                        }
                     });
+                });
+
+                leadReq.on('error', (err) => {
+                    console.error(`[Lead API] Ошибка запроса для orderId=${order.orderId}:`, err);
                 });
 
                 leadReq.write(JSON.stringify(leadData));
                 leadReq.end();
+
             } catch (err) {
-                console.error(err);
+                console.error(`[Contact API] Ошибка обработки ответа для orderId=${order.orderId}:`, err);
             }
         });
+    });
+
+    contactReq.on('error', (err) => {
+        console.error(`[Contact API] Ошибка запроса для orderId=${order.orderId}:`, err);
     });
 
     contactReq.write(JSON.stringify(contactData));
