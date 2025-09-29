@@ -29,6 +29,15 @@ const http = require('node:http')
 const hostname = '0.0.0.0'
 const port = 3000
 
+server.on('request', (req, res) => {
+    //  endpoint для просмотра базы
+    if (req.method === 'GET' && req.url === '/api/orders') {
+        const allOrders = db.prepare('SELECT * FROM orders').all();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(allOrders, null, 2));
+    }
+});
+
 const server = http.createServer((req, res) => {
     if (req.method === 'POST' && req.url === '/api/orders') {
         let body = '';
