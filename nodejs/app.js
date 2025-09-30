@@ -29,16 +29,15 @@ const http = require('node:http')
 const hostname = '0.0.0.0'
 const port = 3000
 
-server.on('request', (req, res) => {
-    //  endpoint для просмотра базы
+
+const server = http.createServer((req, res) => {
+    // endpoint для просмотра базы
     if (req.method === 'GET' && req.url === '/api/orders') {
         const allOrders = db.prepare('SELECT * FROM orders').all();
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(allOrders, null, 2));
+        return res.end(JSON.stringify(allOrders, null, 2));
     }
-});
 
-const server = http.createServer((req, res) => {
     if (req.method === 'POST' && req.url === '/api/orders') {
         let body = '';
         req.on('data', chunk => body += chunk);
@@ -47,7 +46,7 @@ const server = http.createServer((req, res) => {
                 const order = JSON.parse(body);
 
                 // Проверяем на дубли по customerId + orderId
-                const existingСustomer = db.prepare(
+                const existingCustomer = db.prepare(
                     'SELECT 1 FROM orders WHERE customerId = ?'
                 ).get(order.customerId);
 
@@ -55,8 +54,7 @@ const server = http.createServer((req, res) => {
                     'SELECT 1 FROM orders WHERE orderId = ?'
                 ).get(order.orderId);
 
-
-                if (existingСustomer) {
+                if (existingCustomer) {
                     res.writeHead(409, { 'Content-Type': 'application/json' });
                     return res.end(JSON.stringify({
                         status: 'exists',
@@ -68,15 +66,15 @@ const server = http.createServer((req, res) => {
                     return res.end(JSON.stringify({
                         status: 'exists',
                         message: `Заказ с orderId ${order.orderId} уже существует.`
-                }));
-            }
+                    }));
+                }
 
                 db.prepare(`
                     INSERT OR IGNORE INTO orders (orderId, customerId, customerName, phone, email, total, createdAt)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 `).run(order.orderId, order.customerId, order.customerName, order.phone, order.email, order.total, new Date().toISOString());
 
-                sendOrderToAmo(order); // сразу отправляем в amoCRM
+                sendOrderToAmo(order);
 
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ status: 'ok' }));
@@ -85,12 +83,14 @@ const server = http.createServer((req, res) => {
                 res.end(JSON.stringify({ status: 'error', message: err.message }));
             }
         });
-    } else {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'not found' }));
+        return;
     }
 
-})
+    // если не совпало ни одно условие
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'not found' }));
+});
+
 
 server.listen(port, hostname, () => {
     console.log('working ✨')
